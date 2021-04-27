@@ -1,10 +1,9 @@
-# My own
 # Ignore everything
 *
 # But descend into directories
 !*/
 # Recursively allow files under subtree
-!/src/**
+!*/src/**
 
 
 ## Ignore Visual Studio temporary files, build results, and
