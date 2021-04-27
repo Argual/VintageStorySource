@@ -12,7 +12,10 @@ namespace Argual.ArgualCore.GUI
 {
     // Based on the recipe selector
 
-    /// <summary/>
+    /// <summary>
+    /// Use <see cref="DialogSelectCollectible"/> instead!
+    /// </summary>
+    [Obsolete]
     public class GuiDialogItemStackSelector : GuiDialogGeneric
     {
         int prevSlotOver = -1;
@@ -47,18 +50,7 @@ namespace Argual.ArgualCore.GUI
                 string desc = Lang.GetMatching(key);
                 if (desc == key) desc = "";
 
-                skillItems.Add(new SkillItem()
-                {
-                    Code = stack.Item.Code.Clone(),
-                    Name = stack.GetName(),
-                    Description = desc,
-                    RenderHandler = (AssetLocation code, float dt, double posX, double posY) => {
-                        // No idea why the weird offset and size multiplier
-                        double scsize = GuiElement.scaled(size - 5);
-
-                        capi.Render.RenderItemstackToGui(dummySlot, posX + scsize / 2, posY + scsize / 2, 100, (float)GuiElement.scaled(GuiElementPassiveItemSlot.unscaledItemSize), ColorUtil.WhiteArgb);
-                    }
-                });
+                skillItems.Add(GUITool.CreateSkillItemFromCollectible(capi, stack.Item, null, desc, ColorUtil.WhiteArgb));
             }
 
             SetupDialog();
@@ -147,6 +139,16 @@ namespace Argual.ArgualCore.GUI
         private void OnTitleBarClose()
         {
             TryClose();
+        }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+
+            for (int i = 0; i < skillItems.Count; i++)
+            {
+                skillItems[i].Dispose();
+            }
         }
     }
 }

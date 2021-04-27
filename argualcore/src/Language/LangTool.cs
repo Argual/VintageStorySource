@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Vintagestory.API.Common;
 
-namespace Argual.ArgualCore
+namespace Argual.ArgualCore.Language
 {
     /// <summary>
     /// Contains various tools related to localization.
