@@ -1,0 +1,22 @@
+{
+  "ingredientPattern": "_SS,_GS,S__",
+  "ingredients": {
+    "G": {
+      "type": "item",
+      "code": "game:gear-rusty",
+      "quantity": 1
+    },
+    "S": {
+      "type": "item",
+      "code": "game:stick",
+      "quantity": 1
+    }
+  },
+  "name": "multitooldefault",
+  "width": 3,
+  "height": 3,
+  "output": {
+    "type": "item",
+    "code": "multitooldefault"
+  }
+}

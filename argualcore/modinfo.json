@@ -1,0 +1,11 @@
+{
+  "type": "code",
+  "modid": "argualcore",
+  "name": "ArgualCore",
+  "author": "Argual",
+  "description": "Provides some useful modding tools and an easy way to avoid recipe conflicts.\nMore: https://mods.vintagestory.at/show/mod/578",
+  "version": "1.1.0",
+  "dependency": {
+    "game": "1.14.10"
+  }
+}

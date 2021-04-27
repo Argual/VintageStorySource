@@ -1,0 +1,11 @@
+{
+  "code": "multitooldefault",
+  "class": "multitooldefault",
+  "maxstacksize": 1,
+  "creativeinventory": {
+    "general": [ "*" ]
+  },
+  "texture": {
+    "base": "item/multitooldefault"
+  }
+}

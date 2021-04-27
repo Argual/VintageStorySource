@@ -1,0 +1,10 @@
+{
+  "hotkey-switchmultitool": "Gearstick Switch",
+
+  "dialog-title-switchmultitool": "Select the new tool configuration:",
+
+  "heldhelp-switchmultitool": "Use {0} to change shape.",
+
+  "item-multitooldefault": "Gearstick",
+  "itemdesc-multitooldefault": "A simple yet effective tool capable of altering its shape to serve a wide variety of purposes."
+}

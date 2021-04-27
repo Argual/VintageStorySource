@@ -4,7 +4,7 @@
 !*/
 # Recursively allow files under subtree
 !*/src/**
-!*/**/.json
+!*.json
 
 
 ## Ignore Visual Studio temporary files, build results, and
