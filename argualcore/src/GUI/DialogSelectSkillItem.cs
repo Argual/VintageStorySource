@@ -51,13 +51,13 @@ namespace Argual.ArgualCore.GUI
         /// <summary>
         /// Whether or not to show skill item names below the selection grid.
         /// </summary>
-        public bool ShowSkillItemName { get; private set; } = true;
+        public bool ShowSkillItemName { get; protected set; } = true;
 
         /// <summary>
         /// Whether or not to show skill item descriptions below the selection grid.
         /// <para>If there are no descriptions, this has no effect.</para>
         /// </summary>
-        public bool ShowSkillItemDescription { get; private set; } = true;
+        public bool ShowSkillItemDescription { get; protected set; } = true;
 
         /// <summary>
         /// Initializes the selection dialog.

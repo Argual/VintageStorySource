@@ -27,7 +27,7 @@ namespace Argual.ArgualCore.MultiTool
         /// The location of the sound to be played when switching tool.
         /// </summary>
         public virtual AssetLocation SwitchSound { get; set; } = new AssetLocation("game", "sounds/toggleswitch");
-        
+
         /// <summary>
         /// Whether or not to play a sound when switching tool.
         /// </summary>
@@ -47,7 +47,7 @@ namespace Argual.ArgualCore.MultiTool
             }
             else if (api is ICoreClientAPI)
             {
-                (api as ICoreClientAPI).Input.SetHotKeyHandler(MultiToolSystem.ToolSwitchHotKeyCode, HandleToolSwitchHotkey);
+                (api as ICoreClientAPI).Input.SetHotKeyHandler(MultiToolSystem.multiToolSwitchHotKeyCode, HandleToolSwitchHotkey);
             }
         }
 
@@ -75,21 +75,40 @@ namespace Argual.ArgualCore.MultiTool
             }.Append(base.GetHeldInteractionHelp(inSlot));
         }
 
+        /// <summary>
+        /// <inheritdoc/>
+        /// <para>Copies the watched attributes from multitool ingredients to the output multitool.</para>
+        /// </summary>
+        public override void OnCreatedByCrafting(ItemSlot[] allInputslots, ItemSlot outputSlot, GridRecipe byRecipe)
+        {
+            base.OnCreatedByCrafting(allInputslots, outputSlot, byRecipe);
+
+            foreach (var inSlot in allInputslots)
+            {
+                if (!inSlot.Empty && inSlot.Itemstack.Item is ItemMultiTool)
+                {
+                    CopyAttributes(inSlot.Itemstack, outputSlot.Itemstack);
+                }
+            }
+
+            if (MultiToolSystem.TryFindMultiToolFamily(outputSlot.Itemstack.Item.Code, out string family))
+            {
+                var tree = outputSlot.Itemstack.Attributes.GetOrAddTreeAttribute(MultiToolSystem.multiToolAttributeTreeKeyFamilyInfo);
+                tree.SetString(MultiToolSystem.multiToolAttributeKeyCurrentFamily, family);
+                tree.SetString(family, outputSlot.Itemstack.Item.Code.ToString());
+            }
+        }
+
         #endregion
 
         #region Protected methods
-
+        
         /// <summary>
-        /// Called on the server side after a player switches their multitool.
-        /// <para>
-        /// <br>Do not forget to call the base method!</br>
-        /// <br>Use an if statement checking <see cref="RegistryObject.Class"/> if this overload should run only when the multitool is of this type!</br>
-        /// </para>
+        /// Called server side after a succesful multitool switch.
         /// </summary>
         /// <param name="player">The player with the multitool.</param>
-        /// <param name="slot">The slot the multitool is in.</param>
-        protected virtual void OnMultiToolSwitchComplete(IServerPlayer player, ItemSlot slot){}
-
+        /// <param name="slot">The slot with the multitool.</param>
+        protected virtual void OnMultiToolSwitchComplete(IServerPlayer player, ItemSlot slot) { }
 
         #endregion
 
@@ -118,16 +137,34 @@ namespace Argual.ArgualCore.MultiTool
                 dialog.Dispose();
             }
 
-            ArgualCoreMod modSystem = api.ModLoader.GetModSystem<ArgualCoreMod>();
-            List<ItemStack> stacks = modSystem.MultiToolSystem.GetMultiToolItemStacks();
+            string dialogTitle = Lang.Get(LangKey.SwitchMultiToolDialogTitle);
 
-            dialog = new GuiDialogItemStackSelector(
-                Lang.Get(LangKey.SwitchMultiToolDialogTitle),
-                stacks.ToArray(),
-                (selectedIndex) => SendToolSwitchMessageToServer(slot, stacks, selectedIndex),
+            List<AssetLocation> toolAssets = new List<AssetLocation>();
+            foreach (var family in MultiToolSystem.ToolCodes.Keys)
+            {
+                var tree = slot.Itemstack.Attributes.GetOrAddTreeAttribute(MultiToolSystem.multiToolAttributeTreeKeyFamilyInfo);
+                var code = tree.GetString(family, MultiToolSystem.ToolCodes[family].First().ToString());
+                toolAssets.Add(new AssetLocation(code));
+            }
+
+            var tools = toolAssets.Select(a => api.World.GetItem(a));
+
+            dialog = new DialogSelectCollectible(
+                dialogTitle,
+                tools,
+                collectible => {
+                    string key = Language.LangTool.GetItemDescKey(collectible.Code.Domain, collectible.Code.Path);
+                    string desc = Lang.Get(key);
+                    if (key == desc)
+                    {
+                        desc = null;
+                    }
+                    return GUITool.CreateSkillItemFromCollectible(capi, collectible, null, desc);
+                },
+                (selectedIndex) => SendToolSwitchMessageToServer(slot, selectedIndex),
                 () => { return; },
-                capi
-            );
+                capi,
+                showDescription: false);
 
             dialog.TryOpen();
         }
@@ -135,22 +172,18 @@ namespace Argual.ArgualCore.MultiTool
         /// <summary>
         /// Called on the client side.
         /// </summary>
-        void SendToolSwitchMessageToServer(ItemSlot slot, List<ItemStack> stacks, int index)
+        void SendToolSwitchMessageToServer(ItemSlot slot, int index)
         {
             if (slot.Itemstack != null && slot.Itemstack.Item is ItemMultiTool)
             {
-                Item item = stacks[index].Item;
-                if (slot.Itemstack.Item.Code.Path != item.Code.Path || slot.Itemstack.Item.Code.Domain != item.Code.Domain)
+                var packet = new MultiToolSystem.ToolSwitchMessage()
                 {
-                    var packet = new MultiToolSystem.ToolSwitchMessage()
-                    {
-                        inventoryId = slot.Inventory.InventoryID,
-                        slotId = slot.Inventory.GetSlotId(slot),
-                        toolIndex = index
-                    };
+                    inventoryId = slot.Inventory.InventoryID,
+                    slotId = slot.Inventory.GetSlotId(slot),
+                    toolFamily = MultiToolSystem.ToolCodes.Keys.ToList()[index],
+                };
 
-                    (MultiToolSystem.NetworkChannel as IClientNetworkChannel).SendPacket(packet);
-                }
+                (MultiToolSystem.NetworkChannel as IClientNetworkChannel).SendPacket(packet);
             }
         }
 
@@ -165,7 +198,7 @@ namespace Argual.ArgualCore.MultiTool
                 ItemSlot slot = inventory.ElementAtOrDefault(msg.slotId);
                 if (slot != null)
                 {
-                    SwitchToolItemInSlot(sender, slot, msg.toolIndex, PlaySwitchSound);
+                    SwitchToolItemInSlot(sender, slot, msg.toolFamily, PlaySwitchSound);
                 }
             }
         }
@@ -173,23 +206,20 @@ namespace Argual.ArgualCore.MultiTool
         /// <summary>
         /// Called on the server side when a multitool needs to be switched.
         /// </summary>
-        void SwitchToolItemInSlot(IServerPlayer player, ItemSlot slot, int newToolIndex, bool playSound)
+        void SwitchToolItemInSlot(IServerPlayer player, ItemSlot slot, string newToolFamily, bool playSound)
         {
-            var coreMod = api.ModLoader.GetModSystem<ArgualCoreMod>();
-            var stacks = coreMod.MultiToolSystem.GetMultiToolItemStacks();
-            var tool = stacks.ElementAtOrDefault(newToolIndex);
-            if (tool != null && tool.Item.Code.ToString() != slot.Itemstack.Item?.Code.ToString())
-            {
-                ItemStack newItemStack = tool.Clone();
+            var famTree = slot.Itemstack.Attributes.GetOrAddTreeAttribute(MultiToolSystem.multiToolAttributeTreeKeyFamilyInfo);
+            var newCode = famTree.GetString(newToolFamily, MultiToolSystem.ToolCodes[newToolFamily].First().ToString());
 
-                var attributesToKeep = coreMod.MultiToolSystem.ToolAttributesToKeepOnSwitch;
-                foreach (var key in attributesToKeep)
-                {
-                    if (slot.Itemstack.Attributes.HasAttribute(key))
-                    {
-                        newItemStack.Attributes[key] = slot.Itemstack.Attributes[key];
-                    }
-                }
+            var toolStack = new ItemStack(api.World.GetItem(new AssetLocation(newCode)));
+            famTree.SetString(MultiToolSystem.multiToolAttributeKeyCurrentFamily, newCode);
+            famTree.SetString(newToolFamily, newCode);
+
+            if (toolStack != null && toolStack.Item.Code.ToString() != slot.Itemstack.Item?.Code.ToString())
+            {
+                ItemStack newItemStack = toolStack.Clone();
+
+                CopyAttributes(slot.Itemstack, newItemStack);
 
                 slot.Itemstack = newItemStack;
                 slot.MarkDirty();
@@ -199,7 +229,19 @@ namespace Argual.ArgualCore.MultiTool
                     api.World.PlaySoundFor(SwitchSound, player, true);
                 }
 
-                OnMultiToolSwitchComplete(player, slot);
+                (slot.Itemstack.Item as ItemMultiTool).OnMultiToolSwitchComplete(player, slot);
+            }
+        }
+
+        void CopyAttributes(ItemStack stackFrom, ItemStack stackTo)
+        {
+            var attributesToKeep = MultiToolSystem.ToolAttributesToKeepOnSwitch;
+            foreach (var key in attributesToKeep)
+            {
+                if (stackFrom.Attributes.HasAttribute(key))
+                {
+                    stackTo.Attributes[key] = stackFrom.Attributes[key];
+                }
             }
         }
 

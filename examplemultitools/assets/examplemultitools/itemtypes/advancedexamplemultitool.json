@@ -1,0 +1,11 @@
+{
+  "code": "advancedexamplemultitool",
+  "class": "advancedexamplemultitool",
+  "maxstacksize": 1,
+  "creativeinventory": {
+    "general": [ "*" ]
+  },
+  "texture": {
+    "base": "item/examplemultitool"
+  }
+}

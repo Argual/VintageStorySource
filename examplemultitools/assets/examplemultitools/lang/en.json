@@ -1,0 +1,7 @@
+{
+  "item-examplemultitool": "Example Multitool",
+  "itemdesc-examplemultitool": "This is a very basic multitool serving as an example for modders.",
+
+  "item-advancedexamplemultitool": "Advanced Example Multitool",
+  "itemdesc-advancedexamplemultitool": "This multitool counts the amount of times it has been switched to and shows it in chat."
+}

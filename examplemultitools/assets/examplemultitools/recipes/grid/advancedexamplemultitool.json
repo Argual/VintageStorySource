@@ -1,9 +1,9 @@
 {
-  "ingredientPattern": "_SS,_GS,S__",
+  "ingredientPattern": "__S,_T_,S__",
   "ingredients": {
-    "G": {
+    "T": {
       "type": "item",
-      "code": "game:gear-rusty",
+      "code": "examplemultitool",
       "quantity": 1
     },
     "S": {
@@ -16,6 +16,6 @@
   "height": 3,
   "output": {
     "type": "item",
-    "code": "multitooldefault"
+    "code": "advancedexamplemultitool"
   }
 }

@@ -1,0 +1,12 @@
+{
+  "type": "code",
+  "modid": "examplemultitools",
+  "name": "Example Multitools",
+  "author": "Argual",
+  "description": "An example mod showing how to create and register multitools to Argual Core.",
+  "version": "1.0.0",
+  "dependency": {
+    "game": "1.14.10",
+    "argualcore": "1.2.1"
+  }
+}

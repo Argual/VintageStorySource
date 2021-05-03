@@ -11,18 +11,13 @@ using Vintagestory.API.Server;
 
 namespace Argual.ArgualCore
 {
-    /// <summary>
-    /// 
-    /// </summary>
     public partial class ArgualCoreMod : ModSystem
     {
 
         #region Constants
 
-        /// <summary/>
         public const string Domain = "argualcore";
 
-        /// <summary/>
         public const string FileNameConfig = Domain + ".cfg";
 
         #endregion
@@ -35,14 +30,12 @@ namespace Argual.ArgualCore
 
         #region Properties
 
-        /// <summary/>
         public MultiTool.MultiToolSystem MultiToolSystem { get; private set; }
 
         #endregion
 
         #region Public methods
 
-        /// <summary/>
         public override void Start(ICoreAPI api)
         {
             base.Start(api);
@@ -61,18 +54,35 @@ namespace Argual.ArgualCore
         {
             api.RegisterItemClass(MultiTool.LangKey.MultiToolDefault, typeof(MultiTool.ItemMultiTool));
 
-            MultiToolSystem = new MultiTool.MultiToolSystem(api, Domain + AssetLocation.LocationSeparator + "toolswitchchannel", ArgualCoreMod.Domain + AssetLocation.LocationSeparator + "toolswitch",  LogDebug, LogWarning);
-            MultiToolSystem.RegisterMultiTool(Domain, MultiTool.LangKey.MultiToolDefault, Domain + AssetLocation.LocationSeparator + "Test");
+            MultiToolSystem = new MultiTool.MultiToolSystem(api, Domain + AssetLocation.LocationSeparator + "toolswitchchannel",  LogDebug, LogWarning);
+
+            AssetLocation multiToolDefault = new AssetLocation(Domain, MultiTool.LangKey.MultiToolDefault);
+
+            MultiToolSystem.RegisterMultiTool(multiToolDefault.ToString(), multiToolDefault);
+
+            
+            // Register hotkey.
+            if (api is ICoreClientAPI)
+            {
+                var capi = api as ICoreClientAPI;
+
+                capi.Input.RegisterHotKey(
+                    hotkeyCode: MultiTool.MultiToolSystem.multiToolSwitchHotKeyCode,
+                    name: Lang.Get(MultiTool.LangKey.SwitchMultiToolHotkey),
+                    key: GlKeys.Z,
+                    type: HotkeyType.GUIOrOtherControls,
+                    shiftPressed: true);
+            }
         }
 
         private void LogDebug(string message)
         {
-            api?.Logger.Debug(message);
+            api?.Logger.Debug($"[{Domain}] " + message);
         }
 
         private void LogWarning(string message)
         {
-            api?.Logger.Warning(message);
+            api?.Logger.Warning($"[{Domain}] " + message);
         }
 
         #endregion
@@ -102,12 +112,12 @@ namespace Argual.ArgualCore
         /// <param name="attributesToKeepOnSwitch">The keys of attributes which should be copied from the old <see cref="ItemStack"/> to the new one when switching multitools.</param>
         /// <returns>Whether or not the process was succesful.</returns>
         /// <remarks>
-        /// This method is obsolete! Call <see cref="MultiTool.MultiToolSystem.RegisterMultiTool(AssetLocation, string[])"/> instead from <see cref="MultiToolSystem"/>.
+        /// This method is obsolete! Call <see cref="MultiTool.MultiToolSystem.RegisterMultiTool(string, AssetLocation, string[])"/> instead from <see cref="MultiToolSystem"/>.
         /// </remarks>
         [Obsolete]
         public bool RegisterMultiTool(AssetLocation assetLocation, params string[] attributesToKeepOnSwitch)
         {
-            return MultiToolSystem.RegisterMultiTool(assetLocation, attributesToKeepOnSwitch);
+            return MultiToolSystem.RegisterMultiTool(assetLocation.ToString(), assetLocation, attributesToKeepOnSwitch);
         }
 
         /// <summary>

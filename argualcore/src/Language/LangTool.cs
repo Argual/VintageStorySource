@@ -69,7 +69,7 @@ namespace Argual.ArgualCore.Language
 
         public static string GetItemDescKey(string item)
         {
-            return Combine(Item, Desc, item);
+            return Combine(Item + Desc, item);
         }
 
         public static string GetBlockKey(string domain, string block)
@@ -89,7 +89,7 @@ namespace Argual.ArgualCore.Language
 
         public static string GetBlockDescKey(string block)
         {
-            return Combine(Block, Desc, block);
+            return Combine(Block + Desc, block);
         }
 
         public static string GetHeldHelpKey(string domain, string collectible)
